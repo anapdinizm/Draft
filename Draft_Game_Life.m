@@ -4,7 +4,7 @@
 %spsize matrix sparse size
 %tf final time
 
-function tentativa_life(n,spsize,tf)
+function Draft_Game_Life(n,spsize,tf)
 if nargin<3
     n=20;
     spsize=0.3;
