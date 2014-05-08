@@ -1,3 +1,3 @@
 Draft
 =====
-Some drafts
+Some drafts of miscellaneous codes.
