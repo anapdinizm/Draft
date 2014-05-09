@@ -25,8 +25,8 @@ dt=tf/nt; %variação em t
 
 %% Parâmetros
 D=0.125*10^-2; %coeficiente de viscosidade
-u=0.02; %velocidade em x
-v=-0.01; %velocidade em y
+u=0.01; %velocidade em x
+v=0.005; %velocidade em y
 mu=0.05; %fator de decaimento
 
 %% Definição do vetor Fonte
@@ -34,7 +34,7 @@ f=zeros(nn,1);
 %  f(nny,1)=0.2412;
 %  f(20*nny+2,1)=0.2412;
 % f(20*nny+6,1)=0.2412;
-%f(20*nny+5,1)=10;
+% f(20*nny+5,1)=10;
 % f(19*nny+5,1)=0.2412;
 % f(19*nny+6,1)=0.2412;
 % f(21*nny+5,1)=0.2412;
@@ -45,15 +45,36 @@ disp('o núcleo de péclet é')
 np=v*dy/D;
 disp(np)
 
-%% Valores referentes as entradas da matriz M
-A= (-(D/dx)+(u/2))*dt/dx; %coef. de c_{i+nny}
-B= -((D/dx)+(u/2))*dt/dx; %coef. de c_{i-nny}
-E= 1+((2*D/(dx*dx))+(2*D/(dy*dy))+ mu)*dt; %coef. de c_i
-F= (-(D/dy)+(v/2))*dt/dy; %coef. de c_{i+1}
-G= -((D/dy)+(v/2))*dt/dy; %coef. de c_{i-1}
+%% Expansão em Taylor
+%Valores referentes as entradas da matriz M
+% A= (-(D/dx)+(u/2))*dt/dx; %coef. de c_{i+nny}
+% B= -((D/dx)+(u/2))*dt/dx; %coef. de c_{i-nny}
+% E= 1+((2*D/(dx*dx))+(2*D/(dy*dy))+ mu)*dt; %coef. de c_i
+% F= (-(D/dy)+(v/2))*dt/dy; %coef. de c_{i+1}
+% G= -((D/dy)+(v/2))*dt/dy; %coef. de c_{i-1}
+
+%% Crank-Nicolson matrizes
+% Valores referentes as entradas da matriz M
+A= (-(D/2*dx)+(u/4))*dt/dx; %coef. de c_{i+nny}
+B= (-(D/2*dx)-(u/4))*dt/dx; %coef. de c_{i-nny}
+E= 1+(D *dt/(dx*dx))+(D *dt/(dy*dy)); %coef. de c_i
+F= (-(D/2*dy)+(v/4))*dt/dy; %coef. de c_{i+1}
+G= (-(D/2*dy)-(v/4))*dt/dy; %coef. de c_{i-1}
+
+% Valores referentes as entradas da matriz P
+Ap= ((D/2*dx)-(u/4))*dt/dx; %coef. de c_{i+nny}
+Bp= ((D/2*dx)+(u/4))*dt/dx; %coef. de c_{i-nny}
+Ep= 1-(D *dt/(dx*dx))-(D *dt/(dy*dy)); %coef. de c_i
+Fp= ((D/2*dy)-(v/4))*dt/dy; %coef. de c_{i+1}
+Gp= ((D/2*dy)+(v/4))*dt/dy; %coef. de c_{i-1}
+
+
 
 %% Construção da matriz M
 M=E*eye(nn)+diag(diag(F*eye(nn-1)),1)+diag(diag(G*eye(nn-1)),-1)+diag(diag(B*eye(nn-nny)),-nny)+diag(diag(A*eye(nn-nny)),nny);
+
+%% Construção da matriz P
+P=Ep*eye(nn)+diag(diag(Fp*eye(nn-1)),1)+diag(diag(Gp*eye(nn-1)),-1);
 
 %% Condição das bordas inferior, superior e lateral direita 
 for i=1:nn
@@ -100,9 +121,10 @@ dim_y=[0:dy:H];
 % Rearranjando o vetor C na matriz conc
 figure
 for t=1:nt
-    C=M\(C_ini+dt*f); %Resolução do sistema
+    C=M\P*(C_ini+dt*f); %Resolução do sistema
     C_ini=C;
     C_ini(nn-nny+1:nn,1)=0; %condição de Von Neumann
+    C_ini(1:nny-1,1)=0;
     
     conc=zeros(nny,nnx+1);
     for k=2:nnx+1
