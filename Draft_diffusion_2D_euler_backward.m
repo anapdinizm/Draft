@@ -1,5 +1,5 @@
 %Comportamento da equação de difusão em 2D
-%Resolução pelo método implícito de Euler e por Crank-Nicolson.
+%Resolução pelo método implícito de Euler .
 
 function Draft_diffusion_2D
 clear all
@@ -47,81 +47,54 @@ disp(np)
 
 %% Euler Implícito
 %Valores referentes as entradas da matriz M
-% A= (-(D/dx)+(u/2))*dt/dx; %coef. de c_{i+nny}
-% B= -((D/dx)+(u/2))*dt/dx; %coef. de c_{i-nny}
-% E= 1+((2*D/(dx*dx))+(2*D/(dy*dy))+ mu)*dt; %coef. de c_i
-% F= (-(D/dy)+(v/2))*dt/dy; %coef. de c_{i+1}
-% G= -((D/dy)+(v/2))*dt/dy; %coef. de c_{i-1}
-
-%% Crank-Nicolson matrizes
-% Valores referentes as entradas da matriz M
-A= (-(D/2*dx)+(u/4))*dt/dx; %coef. de c_{i+nny}
-B= (-(D/2*dx)-(u/4))*dt/dx; %coef. de c_{i-nny}
-E= 1+(D *dt/(dx*dx))+(D *dt/(dy*dy)); %coef. de c_i
-F= (-(D/2*dy)+(v/4))*dt/dy; %coef. de c_{i+1}
-G= (-(D/2*dy)-(v/4))*dt/dy; %coef. de c_{i-1}
-
-% Valores referentes as entradas da matriz P
-Ap= ((D/2*dx)-(u/4))*dt/dx; %coef. de c_{i+nny}
-Bp= ((D/2*dx)+(u/4))*dt/dx; %coef. de c_{i-nny}
-Ep= 1-(D *dt/(dx*dx))-(D *dt/(dy*dy)); %coef. de c_i
-Fp= ((D/2*dy)-(v/4))*dt/dy; %coef. de c_{i+1}
-Gp= ((D/2*dy)+(v/4))*dt/dy; %coef. de c_{i-1}
-
+A= (-(D/dx)+(u/2))*dt/dx; %coef. de c_{i+nny}
+B= -((D/dx)+(u/2))*dt/dx; %coef. de c_{i-nny}
+E= 1+((2*D/(dx*dx))+(2*D/(dy*dy))+ mu)*dt; %coef. de c_i
+F= (-(D/dy)+(v/2))*dt/dy; %coef. de c_{i+1}
+G= -((D/dy)+(v/2))*dt/dy; %coef. de c_{i-1}
 
 
 %% Construção da matriz M
 M=E*eye(nn)+diag(diag(F*eye(nn-1)),1)+diag(diag(G*eye(nn-1)),-1)+diag(diag(B*eye(nn-nny)),-nny)+diag(diag(A*eye(nn-nny)),nny);
-
-%% Construção da matriz P
-P=Ep*eye(nn)+diag(diag(Fp*eye(nn-1)),1)+diag(diag(Gp*eye(nn-1)),-1)+diag(diag(Bp*eye(nn-nny)),-nny)+diag(diag(Ap*eye(nn-nny)),nny);
 
 
 %% Condição das bordas inferior, superior e lateral direita 
 for i=1:nn
     if mod(i,nny)==1 %condicao para a borda inferior
         if i==1 % canto esquerdo
-            M(i,i+1)=F+G;
-            P(i,i+1)=Fp+Gp;
+            M(i,i+1)=0;%F+G;
         else %demais condições para a borda inferior
             M(i,i-1)=0;
-            P(i,i-1)=0;
+            M(i,i-1)=0;
             M(i,i+1)=F+G; %condicao -2*D*nt/ny^2
-            P(i,i+1)=Fp+Gp;
             if i==nn-nny+1 % canto direito
-                M(i,i-nny)=A+B; %condicao -2*D*nt/nx^2
-                P(i,i-nny)=0;
+                M(i,i-nny)=0;%A+B; %condicao -2*D*nt/nx^2
             end
         end
         
         
     elseif mod(i,nny)==0 % condicao para a borda superior
-        if i==nny % canto esquerdo
+        if i==nny % canto direito
             M(i,i+1)=0;
-            P(i,i+1)=0;
-            M(i,i-1)=F+G; %condicao -2*D*nt/ny^2
-            P(i,i-1)=Fp+Gp;
+            M(i,i-1)=0;%F+G; %condicao -2*D*nt/ny^2
         else %demais condições para a borda superior
             if i==nn % canto direito
-                M(i,i-nny)=A+B; %condicao -2*D*nt/nx^2
-                P(i,i-nny)=0;
+                M(i,i-nny)=0;%A+B; %condicao -2*D*nt/nx^2
             else
                 M(i,i+1)=0;
-                P(i,i+1)=0;
                 M(i,i-1)=F+G; %condicao -2*D*nt/ny^2
-                P(i,i-1)=Fp+Gp;
             end
         end
         
     elseif i>nn-nny+1 && i<nn %condição da borda direita
-        M(i,i-nny)=A+B; %condicao -2*D*nt/nx^2
-        P(i,i-nny)=0;        
+        M(i,i-nny)=0;%A+B; %condicao -2*D*nt/nx^2
+        
     end
 end
 
 %% Construção da imagem
 C_ini=zeros(nn,1); %inicialização da matriz C_ini
-C_ini((nny+6),1)=10^3; 
+C_ini((nny+4),1)=10; 
 % conc=zeros(nnx+1,nny); %inicialização da matriz b
 
 %dimensões em x e em y
@@ -131,12 +104,8 @@ dim_y=[0:dy:H];
 % Rearranjando o vetor C na matriz conc
 figure
 for t=1:nt
-    C=M\P*(C_ini+dt*f); %Resolução do sistema
+    C=M\(C_ini+dt*f); %Resolução do sistema
     C_ini=C;
-    if any(C_ini<0) 
-        [i,j]=find(C_ini<0);
-        C_ini(i,j)=0;
-    end
 %     for k=(nn-nny+1):nn
 %         C_ini(k,1)=0; %condição de Von Neumann
 %     end
@@ -157,15 +126,14 @@ for t=1:nt
     h=surf(dim_x,dim_y,conc,'EdgeColor','none');
 %     shading interp
     colorbar();
-%     axis([0,2,0,0.5,0,1])
-    title({['Difusão com D = ',num2str(D)];['u = ',num2str(u) ', v = ',num2str(v) ', {\mu} = ',num2str(mu)];['tempo (t) = ',num2str(t*dt),' de ',num2str(tf)]})
+    title({['Difusão com D = ',num2str(D)];['u = ',num2str(u) ', v = ',num2str(v) ', {\mu} = ',num2str(mu)];[ 'Núcleo de Péclet= ',num2str(vn) ];['tempo (t) = ',num2str(t*dt),' de ',num2str(tf)]})
     xlabel('Coordenada em (x)')
     ylabel('Coordenada em (y)')
     zlabel('Perfil da propriedade de transporte')
     if t==1
-%         saveas(h, 'fig1_fonte5', 'fig');
-%         saveas(h, 'fig1_fonte5', 'jpg');
-%         saveas(h, 'fig1_fonte5', 'pdf');
+        saveas(h, 'fig1_p1_e6_2d', 'fig');
+        saveas(h, 'fig1_p1_e6_2d', 'jpg');
+        saveas(h, 'fig1_p1_e6_2d', 'pdf');
         pause;
     end
 %     if t==(nt/4)
@@ -182,8 +150,8 @@ for t=1:nt
 %     end
     drawnow;
     refreshdata(h)
-% saveas(h, 'fig7_fonte5', 'fig');
-% saveas(h, 'fig7_fonte5', 'jpg');
-% saveas(h, 'fig7_fonte5', 'pdf');
+saveas(h, 'fig4_p1_e6_2d', 'fig');
+saveas(h, 'fig4_p1_e6_2d', 'jpg');
+saveas(h, 'fig4_p1_e6_2d', 'pdf');
 end
 end
