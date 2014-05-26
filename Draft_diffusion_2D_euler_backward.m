@@ -1,9 +1,9 @@
-%Comportamento da equação de difusão em 2D
-%Resolução pelo método implícito de Euler .
+%Comportamento da equaï¿½ï¿½o de difusï¿½o em 2D
+%Resoluï¿½ï¿½o pelo mï¿½todo implï¿½cito de Euler .
 
-function Draft_diffusion_2D
+function Draft_diffusion_2D_euler_backward
 clear all
-%% Entradas das dimensões da malha
+%% Entradas das dimensï¿½es da malha
 nx=25; %intervalos em x
 ny=5; %intervalos em y
 
@@ -15,21 +15,21 @@ nn=nnx*nny;
 L=2; %largura
 H=0.5; %altura
 
-dx=L/nx; %variação em x
-dy=H/ny; %variação em y
+dx=L/nx; %variaï¿½ï¿½o em x
+dy=H/ny; %variaï¿½ï¿½o em y
 
-%% Parâmetros para o tempo
-nt=200; %número de intervalos em t
+%% Parï¿½metros para o tempo
+nt=200; %nï¿½mero de intervalos em t
 tf=20; %tempo final
-dt=tf/nt; %variação em t
+dt=tf/nt; %variaï¿½ï¿½o em t
 
-%% Parâmetros
+%% Parï¿½metros
 D=0.125*10^-2; %coeficiente de viscosidade
 u=0.01; %velocidade em x
 v=0.005; %velocidade em y
 mu=0.05; %fator de decaimento
 
-%% Definição do vetor Fonte
+%% Definiï¿½ï¿½o do vetor Fonte
 f=zeros(nn,1);
 %  f(nny,1)=0.2412;
 %  f(20*nny+2,1)=0.2412;
@@ -40,12 +40,12 @@ f=zeros(nn,1);
 % f(21*nny+5,1)=0.2412;
 % f(21*nny+6,1)=0.2412;
 
-%% Núcleo de péclet
-disp('o núcleo de péclet é')
+%% Nï¿½cleo de pï¿½clet
+disp('o nï¿½cleo de pï¿½clet ï¿½')
 np=v*dy/D;
 disp(np)
 
-%% Euler Implícito
+%% Euler Implï¿½cito
 %Valores referentes as entradas da matriz M
 A= (-(D/dx)+(u/2))*dt/dx; %coef. de c_{i+nny}
 B= -((D/dx)+(u/2))*dt/dx; %coef. de c_{i-nny}
@@ -54,16 +54,16 @@ F= (-(D/dy)+(v/2))*dt/dy; %coef. de c_{i+1}
 G= -((D/dy)+(v/2))*dt/dy; %coef. de c_{i-1}
 
 
-%% Construção da matriz M
+%% Construï¿½ï¿½o da matriz M
 M=E*eye(nn)+diag(diag(F*eye(nn-1)),1)+diag(diag(G*eye(nn-1)),-1)+diag(diag(B*eye(nn-nny)),-nny)+diag(diag(A*eye(nn-nny)),nny);
 
 
-%% Condição das bordas inferior, superior e lateral direita 
+%% Condiï¿½ï¿½o das bordas inferior, superior e lateral direita 
 for i=1:nn
     if mod(i,nny)==1 %condicao para a borda inferior
         if i==1 % canto esquerdo
             M(i,i+1)=0;%F+G;
-        else %demais condições para a borda inferior
+        else %demais condiï¿½ï¿½es para a borda inferior
             M(i,i-1)=0;
             M(i,i-1)=0;
             M(i,i+1)=F+G; %condicao -2*D*nt/ny^2
@@ -77,7 +77,7 @@ for i=1:nn
         if i==nny % canto direito
             M(i,i+1)=0;
             M(i,i-1)=0;%F+G; %condicao -2*D*nt/ny^2
-        else %demais condições para a borda superior
+        else %demais condiï¿½ï¿½es para a borda superior
             if i==nn % canto direito
                 M(i,i-nny)=0;%A+B; %condicao -2*D*nt/nx^2
             else
@@ -86,28 +86,28 @@ for i=1:nn
             end
         end
         
-    elseif i>nn-nny+1 && i<nn %condição da borda direita
+    elseif i>nn-nny+1 && i<nn %condiï¿½ï¿½o da borda direita
         M(i,i-nny)=0;%A+B; %condicao -2*D*nt/nx^2
         
     end
 end
 
-%% Construção da imagem
-C_ini=zeros(nn,1); %inicialização da matriz C_ini
+%% Construï¿½ï¿½o da imagem
+C_ini=zeros(nn,1); %inicializaï¿½ï¿½o da matriz C_ini
 C_ini((nny+4),1)=10; 
-% conc=zeros(nnx+1,nny); %inicialização da matriz b
+% conc=zeros(nnx+1,nny); %inicializaï¿½ï¿½o da matriz b
 
-%dimensões em x e em y
+%dimensï¿½es em x e em y
 dim_x=[0:dx:L];
 dim_y=[0:dy:H];
 
 % Rearranjando o vetor C na matriz conc
 figure
 for t=1:nt
-    C=M\(C_ini+dt*f); %Resolução do sistema
+    C=M\(C_ini+dt*f); %Resoluï¿½ï¿½o do sistema
     C_ini=C;
 %     for k=(nn-nny+1):nn
-%         C_ini(k,1)=0; %condição de Von Neumann
+%         C_ini(k,1)=0; %condiï¿½ï¿½o de Von Neumann
 %     end
 %     for k=1:nny-1
 %         C_ini(k,1)=0;
@@ -122,11 +122,11 @@ for t=1:nt
         end
     end
     
-    %Plot da superfície
+    %Plot da superfï¿½cie
     h=surf(dim_x,dim_y,conc,'EdgeColor','none');
 %     shading interp
     colorbar();
-    title({['Difusão com D = ',num2str(D)];['u = ',num2str(u) ', v = ',num2str(v) ', {\mu} = ',num2str(mu)];[ 'Núcleo de Péclet= ',num2str(vn) ];['tempo (t) = ',num2str(t*dt),' de ',num2str(tf)]})
+    title({['Difusï¿½o com D = ',num2str(D)];['u = ',num2str(u) ', v = ',num2str(v) ', {\mu} = ',num2str(mu)];[ 'Nï¿½cleo de Pï¿½clet= ',num2str(vn) ];['tempo (t) = ',num2str(t*dt),' de ',num2str(tf)]})
     xlabel('Coordenada em (x)')
     ylabel('Coordenada em (y)')
     zlabel('Perfil da propriedade de transporte')
