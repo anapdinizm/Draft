@@ -1,63 +1,75 @@
-% function Draft_direction_search_min(p0,fun)
-%função z=x.^2+y.^2, x=-4:0.1:4, y=-4:0.1:4
-
+% Function try to find the minimum point of two variable function
+%Algorithm Idea:
 %Sejam sigma > 0, alpha e theta (0, 1) constantes dadas. Se x_k pertence IR^n é tal que Grad(f(x_k))~= 0, os passos para determinar x_{k+1} são:
 %Passo 1: Escolher d_k pertencente IR^n, tal que
 %(i) norm(d_k) >= norm(Grad f(x_k));
-%(ii) Grad f'(x_k)d_k >= norm(?f(x_k)) norm(d_k).
+%(ii) Grad'(f(x_k))d_k >= norm(Grad(f(x_k))) norm(d_k).
 %Passo 2: (Busca linear)
 %(i) lambda = 1;
-%(ii) Se f(x_k + lambda d_k) < f(x_k) + ???f'(x_k)d_k, ir a (iv);
+%(ii) Se f(x_k + lambda d_k) < f(x_k) + Grad'(f(x_k))d_k, ir a (iv);
 %(iii) Escolher lambda_barra pertencente [0.1 lambda, 0.9lambda]. Fazer lambda = lambda_barra e ir a (ii);
 %(iv) Fazer lambda_k = lambda, e x_{k+1} = x_k + lambda_k d_k.
-v=-4:0.001:4;
-[x,y]=meshgrid(v);
-% if nargin<2
-    fun=x.^2+y.^2;
-    p0=[4,4];
-% end
-%constantes dadas
+function Draft_direction_search_min(p0,fun)
+
+%Create the symbolic function
+if nargin<2
+    fun=x^3+y^2;
+    p0=[1,0];
+end
+
+syms x y
+% f(x,y)=x^3+y^2;
+% f(x,y)=exp(x+2*y);
+f(x,y)=fun;
+gradx=diff(f,x,1);
+grady=diff(f,y,1);
+hessiana=[diff(gradx,x,1),diff(gradx,y,1);diff(grady,x,1),diff(grady,y,1)];
+
+
 alpha=0.5;
 theta=0.5;
 sigma=0.3; %tamanho do passo, para que não vá rapidamente para zero
 
-z=fun;
 i=1;
 p(i,:)=p0;
-[rx,cx]=find(x==p0(1));
-[ry,cy]=find(y==p0(2));
-r=find(rx==ry);
-c=find(cx==cy);
-tol=1;
-[gradx,grady] = gradient(z,.1,.1);
-while (gradx(r,c)~=0 || grady(r,c)~=0) && tol>10^(-8)
+tol=[1,1];
+lambda=1;
+
+while (gradx(p0(1),p0(2))~=0 || grady(p0(1),p0(2))~=0) && norm(tol)>10^(-6)
     i
     %Passo 1
-    norm_d=sigma*norm([gradx(r,c),grady(r,c)]);
-    d(i,:)=[gradx(r,c),grady(r,c)]\(-theta*norm([gradx(r,c),grady(r,c)])*norm_d);
+    norm_d=sigma*norm([gradx(p0(1),p0(2)),grady(p0(1),p0(2))]);
+    norm_d=double(norm_d);
+%     d0=[gradx(p0(1),p0(2)),grady(p0(1),p0(2))]\(-theta*norm([gradx(p0(1),p0(2)),grady(p0(1),p0(2))])*norm_d);
+    d0=-theta*[gradx(p0(1),p0(2)),grady(p0(1),p0(2))];
+    d0=double(d0);
     %Passo 2
-    lambda(i)=1;
-    p_next=p(i,:)+lambda*d(i,:);
-    %PRECISO VERIFICAR APROXIMAÇÃO
-    [rx,cx]=find(x==p_next(1));
-    [ry,cy]=find(y==p_next(2));
-    r_next=find(rx==ry);
-    c_next=find(cx==cy);
-    %     if z(r_next,c_next)<z(r,c)+ alpha*lambda*[gradx(r,c),grady(r,c)]'*d(i,:)
-    %         lambda(i+1)=lambda(i);
-    %         p(i+1,:)=p_next;
-    while z(r_next,c_next)>=z(r,c)+ alpha*lambda*[gradx(r,c),grady(r,c)]*d(i,:)
+    p_next=p0+lambda*d0;
+    lambda_barra=lambda;
+    while (lambda_barra > 0.1*lambda) && (f(p_next(1),p_next(2)) >= f(p0(1),p0(2))+ alpha*lambda_barra*[gradx(p0(1),p0(2)),grady(p0(1),p0(2))]*d0')
         lambda_barra=lambda-0.15;
-        lambda=lambda_barra;
     end
-    lambda(i+1)=lambda(i);
+    lambda=lambda_barra;
     p(i+1,:)=p_next;
-    r=r_next;
-    c=c_next;
-    
-    tol=p(i+1,:)-p(i,:)
+    tol=p_next-p0;
+    p0=p_next ;
+    d(i,:)=d0;
     i=i+1;
     pause
 end
-
    
+% %plot
+v=-4:0.1:4;
+[x,y]=meshgrid(v);
+fun=f(x,y);
+fun=double(fun);
+[Ngradx,Ngrady] = gradient(fun,.1,.1);
+contour(x,y,fun);
+hold on
+quiver(x,y,Ngradx,Ngrady);
+scatter(p(:,1),p(:,2),100,'g','fill')
+plot(p(:,1),p(:,2))
+hold off
+figure
+surf(x,y,fun)
+
